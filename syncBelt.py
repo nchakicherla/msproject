@@ -1,7 +1,8 @@
 class syncBelt:
     
-    def __init__(self, interval):
+    def __init__(self, interval, duration):
         self.interval = interval
+        self.duration = duration
         
     def motor(self):
         
@@ -25,6 +26,8 @@ class syncBelt:
                     print("Input pin 8 is LOW - Output pin 2 is LOW")
                     GPIO.output(3, 0)           # set pin 3 output to LOW/0
                 sleep(interval)                 # wait for specified amount of time before repolling (s)
+                duration = duration - interval  # iterate duration downwards by interval (s) until duration is 0
+                
 
         except:
             print("An exception occurred (motor)")  # if code is unsuccessful return error message
@@ -51,7 +54,7 @@ class syncBelt:
                 GPIO.output(7, 0)           # set pin 7 output to LOW/0
 
         except:
-            print("An exception occurred (camera)"
+            print("An exception occurred (camera)")
 
         finally:
             GPIO.cleanup()
