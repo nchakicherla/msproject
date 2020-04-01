@@ -3,6 +3,7 @@ class syncBelt:
     def __init__(self, interval, duration):
         self.interval = interval
         self.duration = duration
+        # duration should be an integer multiple of interval (s)
         
     def motor(self):
         
@@ -19,15 +20,19 @@ class syncBelt:
         
         try:
             while True:
-                print("Motor active")
-                GPIO.output(3, 1)
-                sleep(interval)                 # wait for specified amount of time before repolling (s)
-                duration = duration - interval  # iterate duration downwards by interval (s) until duration is 0
-                if duration == 0:               
+                if duration != 0:
+                    print("Motor active")
+                    GPIO.output(3, 1)
+                    sleep(interval)                 # wait for specified amount of time before repolling (s)
+                    duration = duration - interval  # iterate duration downwards by interval (s) until duration is 0
+                if duration == 0:              
                     break
                 
             print("Cycle finished")
 
+        except KeyboardInterrupt:
+            print("Stopping motor")
+            GPIO.output(3, 0)                   # turn off motor
         except:
             print("An exception occurred (motor)")  # if code is unsuccessful return error message
             
