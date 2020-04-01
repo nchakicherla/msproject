@@ -20,11 +20,10 @@ class syncBelt:
         
         try:
             while True:
-                if duration != 0:
-                    print("Motor active")
-                    GPIO.output(3, 1)
-                    sleep(interval)                 # wait for specified amount of time before repolling (s)
-                    duration = duration - interval  # iterate duration downwards by interval (s) until duration is 0
+                print("Motor active")
+                GPIO.output(3, 1)
+                sleep(interval)                 # wait for specified amount of time before repolling (s)
+                duration = duration - interval  # iterate duration downwards by interval (s) until duration is 0
                 if duration == 0:              
                     break
                 
