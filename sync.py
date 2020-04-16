@@ -3,6 +3,8 @@
 
 import RPi.GPIO as GPIO
 from picamera import PiCamera
+import board
+import neopixel
 from time import sleep
 
 GPIO.setwarnings(False)
@@ -15,12 +17,15 @@ GPIO.setup(7, GPIO.OUT)
 
 GPIO.output(7, 0)
 
+pixels = neopixel,NeoPixel(board.D18, x) # x = number of LEDs
+
 def (15, timeon, timeoff, cycles):
     print("Button pressed! Motor in operation.")
     n = cycles
     while cycles != 0:
         a = (n - cycles) + 1
         GPIO.add_event_detect(15, GPIO.RISING)
+        pixels.fill()
         GPIO.output(7, 1)
         sleep(timeon)
         GPIO.output(7, 0)
