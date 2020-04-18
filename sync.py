@@ -19,34 +19,50 @@ GPIO.output(7, 0)
 
 pixels = neopixel,NeoPixel(board.D18, x) # x = number of LEDs
 
-def (15, timeon, timeoff, cycles):
+print("Pins have been setup, waiting for signal to start motor operation")
+
+def motor(timeon, timeoff, cycles, profile):
     print("Button pressed! Motor in operation.")
     n = cycles
-    while cycles != 0:
-        a = (n - cycles) + 1
-        GPIO.add_event_detect(15, GPIO.RISING)
-        pixels.fill()
-        GPIO.output(7, 1)
-        sleep(timeon)
-        GPIO.output(7, 0)
-        cam = PiCamera()
-        camera.start_preview()
-        camera.capture('/home/pi/Pictures/%s.jpg', a)
-        sleep(timeoff)
-        camera.stop_preview()
-        if GPIO.event_detected(15):
-            break
-        cycles = cycles - 1
-    return "Motor cycling complete."
-try
-    while True:
-        GPIO.add_event_detect(15, GPIO.RISING, callback=motor)
-        timeon = 1
-        timeoff = 1
-        cycles = 8
+    if profile == 0:
+        while cycles != 1:
+            a = (n - cycles) + 1
+            GPIO.add_event_detect(15, GPIO.RISING)
+            if GPIO.event_detected(15):
+                break
+            GPIO.output(7, 1)
+            sleep(timeon)
+            GPIO.output(7, 0)
+            sleep(timeoff/2)
+            cam = PiCamera()
+            camera.start_preview()
+            camera.capture('/home/pi/Pictures/%s.jpg', a)
+            sleep(timeoff/2)
+            camera.stop_preview()
+            cycles = cycles - 1
+            if cycles == 0:
+                break
+        print("Motor cycling complete.")
+
+    if profile == 1:
+        while cycles !=1:
+            b = (n - cycles) + 1
+            GPIO.add_event_detect(15, GPIO.RISING)
+
+
+try:
+
+    GPIO.add_event_detect(15, GPIO.RISING)
+    on = 1
+    off = 1
+    cyc = 8
+    prof = 1
+    if GPIO.event_detected(15):
+        motor(on, off, cyc, prof)
+
+
 except KeyboardInterrupt:
-    print("Interrupt received.")
-    return
+    print("Interrupt received. Program exited")
 
 
 
