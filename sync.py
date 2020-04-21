@@ -22,7 +22,6 @@ pixels = neopixel,NeoPixel(board.D18, x) # x = number of LEDs
 print("Pins have been setup, waiting for signal to start motor operation")
 
 def motor(timeon, timeoff, cycles, profile):
-    print("Button pressed! Motor in operation.")
     n = cycles
     if profile == 0:
         while cycles != 1:
@@ -31,6 +30,7 @@ def motor(timeon, timeoff, cycles, profile):
             if GPIO.event_detected(15):
                 break
             GPIO.output(7, 1)
+            print("Motor in operation.")
             sleep(timeon)
             GPIO.output(7, 0)
             sleep(timeoff/2)
@@ -48,21 +48,24 @@ def motor(timeon, timeoff, cycles, profile):
         while cycles !=1:
             b = (n - cycles) + 1
             GPIO.add_event_detect(15, GPIO.RISING)
+            # profile for
 
 
 try:
+    with open('config.txt','r') as conf
+        x = conf.read().splitlines()
+    on = x[0]; off = x[1]; cyc = x[2]; prof = x[3]
 
     GPIO.add_event_detect(15, GPIO.RISING)
-    on = 1
-    off = 1
-    cyc = 8
-    prof = 1
+    t = threading.Thread(target=motor, args=(on,off,cyc,prof))
     if GPIO.event_detected(15):
-        motor(on, off, cyc, prof)
-
+        t.start()
+        print("Button press detected. Beginning motor cycling.")
+        t.join()
+        print("Cycling complete. Awaiting button press.")
 
 except KeyboardInterrupt:
-    print("Interrupt received. Program exited")
+    print("Interrupt received.")
 
 
 
