@@ -2,10 +2,12 @@
 #
 
 import RPi.GPIO as GPIO
+import threading
 from picamera import PiCamera
+from time import sleep
 import board
 import neopixel
-from time import sleep
+
 
 GPIO.setwarnings(False)
 
@@ -52,18 +54,20 @@ def motor(timeon, timeoff, cycles, profile):
 
 
 try:
-    with open('config.txt','r') as conf
+    with open('config.txt','r') as conf:
         x = conf.read().splitlines()
     on = x[0]; off = x[1]; cyc = x[2]; prof = x[3]
 
     GPIO.add_event_detect(15, GPIO.RISING)
-    t = threading.Thread(target=motor, args=(on,off,cyc,prof))
+    m = threading.Thread(target=motor, args=(on,off,cyc,prof))
     if GPIO.event_detected(15):
-        t.start()
+        m.start()
         print("Button press detected. Beginning motor cycling.")
-        t.join()
-        print("Cycling complete. Awaiting button press.")
-
+        m.join()
+        print("Cycling complete.")
+    else:
+        print("Waiting for button press.")
+        sleep(0.1)
 except KeyboardInterrupt:
     print("Interrupt received.")
 
