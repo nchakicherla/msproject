@@ -9,10 +9,10 @@ import board
 import neopixel
 
 GPIO.setwarnings(False)
-GPIO.setmode(GPIO.BOARD) # button input = 15, motor output = 7
-GPIO.setup(15, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-GPIO.setup(7, GPIO.OUT)
-GPIO.output(7, 0)
+GPIO.setmode(GPIO.BCM) # button input = 15, motor output = 7
+GPIO.setup(22, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+GPIO.setup(3, GPIO.OUT)
+GPIO.output(3, 0)
 
 pixels = neopixel.NeoPixel(board.D18, x) # x = number of LEDs
 
@@ -26,10 +26,10 @@ def motor(timeon, timeoff, cycles, profile):
             #    break
             #else:
             #    continue
-            GPIO.output(7, 1)
+            GPIO.output(3, 1)
             print("Motor in operation.")
             sleep(timeon)
-            GPIO.output(7, 0)
+            GPIO.output(3, 0)
             sleep(timeoff/2)
             cam = PiCamera()
             #cam.start_preview()
@@ -60,10 +60,10 @@ try:
     GPIO.add_event_detect(15, GPIO.RISING)
 
     while True:
-        while GPIO.input(15) == 0:
+        while GPIO.input(22) == 0:
             sleep(0.01)
-        if GPIO.event_detected(15):
-            GPIO.remove_event_detect(15)
+        if GPIO.event_detected(22):
+            GPIO.remove_event_detect(22)
             m.start()
             print("Button press detected. Beginning motor cycling.")
             m.join()
