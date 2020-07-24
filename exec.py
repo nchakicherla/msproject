@@ -72,9 +72,9 @@ def loading(clusters, strips, profile, initial):
     for i in range(clusters):
         for j in range(strips):
             GPIO.add_event_detect(detectpin, GPIO.RISING, bouncetime=buttonbounce)
+            print("Load strip, and press button when strip is securely placed on belt.")
+            # User initiates chemistry, loads strip, then presses button to continue.
             while True:
-                print("Load strip, and press button when strip is securely placed on belt.")
-                # User initiates chemistry, loads strip, then presses button to continue.
                 if GPIO.event_detected(detectpin):
                     break
             if initial == "y":
