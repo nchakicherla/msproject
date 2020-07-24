@@ -121,7 +121,7 @@ if __name__ == "__main__":
     else:
         timehistory = open("timefile.txt", "r")
         rotation = float(timehistory.read())
-    print("Time for full loop is " + "looptime" + "\n")
+    print("Time for full loop is " + str(rotation) + "\n")
 
     print("Loading Sequence:")
     print("The following loading sequence allows for initiation and loading of each test strip.\n")
