@@ -127,8 +127,8 @@ if __name__ == "__main__":
         if 1 <= n <= 4:
             break
     while True:
-        p = int(input("Enter lighting profile to be used (1-3):"))  # 1 = 4 colors, 2 = white light
-        if 1 <= p <= 4:
+        p = int(input("Enter lighting profile to be used (1-2):"))  # 1 = 4 colors, 2 = white light
+        if 1 <= p <= 2:
             break
     while True:
         t = int(input("Enter time to wait between images (seconds):"))
@@ -181,7 +181,7 @@ if __name__ == "__main__":
 
     input("Press enter to begin loading cycle.")
 
-    cyclecount = 0
+    cyclecount = 1
     beginloading: float = time.perf_counter()
     loading(g, n, p, f)  # run loading sequence and take pictures of initial strip if specified
     e -= 1
