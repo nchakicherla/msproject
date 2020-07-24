@@ -2,7 +2,6 @@
 # is controlled by a self-contained function that is called whenever needed.
 
 import RPi.GPIO as GPIO
-import threading
 from picamera import PiCamera
 import time
 import board
@@ -24,7 +23,10 @@ cam.start_preview(fullscreen = False, window = (800, 400, 640, 480)) # draw came
 
 # Method for controlling motor/belt
 
-def motor():
+def motor(moveTime):
+    GPIO.output(motorpin, 1)
+    time.sleep(moveTime)
+    GPIO.output(motorpin, 0)
     return
 
 # Method for determining how long it takes for full rotation of belt
@@ -53,13 +55,17 @@ def calibrate():
             break
     return
 
+# Method for initial cycle, during which reactions are initiated and strips are loaded
+
+def loading():
+
 
 # Retrieve operation parameters from user
 
 print("This program was created to automate the photography of serum creatinine test strips\n\n")
 
-g = input("Enter the number of strip groups (1-4):")
-n = input("Enter the number of strips per group (1-4):")
+g = input("Enter the number of strip clusters (1-4):")
+n = input("Enter the number of strips per cluster (1-4):")
 i = input("Enter lighting profile to be used :")
 t = input("Enter time to wait between images (seconds):")
 f = input("Should images be obtained at t = 0? (y/n):")
@@ -70,17 +76,20 @@ lights.fill((255, 255, 255)) # light up all LEDs white to ease loading process
 
 # Initiate calibration, where time required for full rotation is calculated for later use
 
-print("Calibration Sequence:")
+print("Calibration Sequence:\n")
 print("The following calibration sequence allows for more consistency in use\n")
 print("1. Place any lightweight object in the center of the viewfinder.\n")
 print("2. Press the push button to activate the motor. The object will rotate around the belt.\n")
-print("3. Once the object has traveled around the belt and is again in the center of the viewfinder,")
-print("\tpress the button again. This will record the time required for a full rotation\n")
+print("3. Once the object has traveled around the belt and is again in the center of the viewfinder, press the button "
+      "again. This will record the time required for a full rotation\n")
 
 input("Press enter to continue...")
 
 calibrate()
-print(looptime)
+print("Time for full loop is " + looptime + "\n")
+
+print("")
+
 
 
 
