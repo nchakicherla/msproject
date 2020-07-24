@@ -1,6 +1,9 @@
 # Python script used to control motor/belt, LEDs for lighting, and camera for image acquisition. Each component
 # is controlled by a self-contained function that is called when needed
 
+from typing import TextIO
+import sys
+import threading
 import RPi.GPIO as GPIO
 import picamera
 import time
@@ -10,7 +13,7 @@ import neopixel
 detectpin = 22  # pin used for detecting button presses
 motorpin = 3  # pin used with TIP120 for controlling motor
 numLED = 58  # number of LEDs to be used with NeoPixel
-buttonbounce = 200
+buttonbounce = 200  # bouncetime for GPIO button presses
 
 GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BCM)  # button input = 15, motor output = 7
@@ -27,12 +30,29 @@ r = [[255, 197, 143], [255, 214, 170], [255, 241, 224],
      [255, 250, 244]]  # create 2D array of RGB values for common light colors
 
 
-# Method for controlling motor/belt
+# Method for activating motor/belt
 def motor(movetime):
     GPIO.output(motorpin, 1)
     time.sleep(movetime)
     GPIO.output(motorpin, 0)
     return
+
+
+# Works with rotationtime to determine amount of time required for 360 degree rotation
+def calibrate():
+    GPIO.add_event_detect(detectpin, GPIO.RISING, bouncetime=buttonbounce)
+    while True:
+        if GPIO.event_detected(detectpin):
+            GPIO.remove_event_detect(detectpin)
+            GPIO.output(motorpin, 1)
+            beginrotation: float = time.perf_counter()
+            rotationtime()
+            endrotation: float = time.perf_counter()
+            rotation: float = endrotation - beginrotation  # Calculate time for full rotation for later use
+            timefile = open("timefile.txt", "w")  # write rotation time to file
+            timefile.write(rotation)
+            break
+    return rotation
 
 
 # Determine amount of time required for full rotation of belt
@@ -44,24 +64,6 @@ def rotationtime():
             GPIO.remove_event_detect(detectpin)
             break
 
-    return
-
-
-# Works with rotationtime to determine amount of time required for 360 degree rotation
-def calibrate():
-    GPIO.add_event_detect(detectpin, GPIO.RISING, bouncetime=buttonbounce)
-    while True:
-        if GPIO.event_detected(detectpin):
-            GPIO.remove_event_detect(detectpin)
-            GPIO.output(motorpin, 1)
-            begin = time.perf_counter()
-            rotationtime()
-            end = time.perf_counter()
-            global rotation
-            rotation = end - begin  # Calculate time for full rotation for later use
-            timefile = open("timefile.txt", "w")  # write rotation time to file
-            timefile.write(rotation)
-            break
     return
 
 
@@ -79,55 +81,118 @@ def loading(clusters, strips, profile, initial):
                 if profile == 1:
                     color = 0
                     for a in range(3):
-                        if profile == 1:
-                            lights.fill((r[color][0], r[color][1], r[color][2]))
-                            cam.capture('{0}_{1}_{2}.jpg'.format(i, j, color))
+                        lights.fill((r[color][0], r[color][1], r[color][2]))
+                        # filename = cluster_strip_light_cyclenumber.jpg
+                        cam.capture('{0}_{1}_{2}_{3}.jpg'.format(i, j, color, cyclecount))
                         color += 1
-                else:
+                elif profile == 2:
                     lights.fill((255, 255, 255))
-                    cam.capture('{0}_{1}.jpg'.format(i, j))
+                    cam.capture('{0}_{1}_{2}.jpg'.format(i, j, cyclecount))
             GPIO.remove_event_detect(detectpin)
             print("Motor in motion. Please prepare next strip in cluster")
-            motor(rotation / strips)
+            motor(rot_time / strips)
+        motor(rot_time / (strips * clusters))
 
 
+# Cycling of belt, similar to loading cycle but without user confirmation (automated)
+def cycling():
+    for i in range(clusters):
+        for j in range(strips):
+            if profile == 1:
+                color = 0
+                for a in range(3):
+                    lights.fill((r[color][0], r[color][1], r[color][2]))
+                    # filename = cluster_strip_light.jpg
+                    cam.capture('{0}_{1}_{2}_{3}.jpg'.format(i, j, color, cyclecount))
+                    color += 1
+            elif profile == 2:
+                lights.fill((255, 255, 255))
+                cam.capture('{0}_{1}_{2}.jpg'.format(i, j, cyclecount))
+            motor(rot_time / strips)
+
+
+# Program starts here
 if __name__ == "__main__":
     # Retrieve operation parameters from user
-
     print("This program was created to automate the photography of serum creatinine test strips\n\n")
 
-    g = input("Enter the number of strip clusters (1-4):")
-    n = input("Enter the number of strips per cluster (1-4):")
-    p = input("Enter lighting profile to be used (1-3):")
-    t = input("Enter time to wait between images (seconds):")
-    f = input("Should images be obtained at t = 0? (y/n):")
-    c = input("Should calibration be performed? (y/n):")
+    while True:
+        g = int(input("Enter the number of strip clusters (1-4):"))
+        if 1 <= g <= 4:
+            break
+    while True:
+        n = int(input("Enter the number of strips per cluster (1-4):"))
+        if 1 <= n <= 4:
+            break
+    while True:
+        p = int(input("Enter lighting profile to be used (1-3):"))  # 1 = 4 colors, 2 = white light
+        if 1 <= p <= 4:
+            break
+    while True:
+        t = int(input("Enter time to wait between images (seconds):"))
+        if t > 0:
+            break
+    while True:
+        f = str(input("Should images be obtained at t = 0? (y/n):"))
+        if f == 'y' or f == 'n':
+            break
+    while True:
+        c = str(input("Should calibration be performed? (y/n):"))
+        if c == 'y' or c == 'n':
+            break
+    while True:
+        e = int(input("Enter number of cycles to perform"))
+        if e >= 0:
+            break
 
-    lights.fill((255, 255, 255))  # light up all LEDs white to ease loading process
+    # light up all LEDs white to ease loading process
+    lights.fill((255, 255, 255))
 
     # Initiate calibration, where time required for full rotation is calculated for later use
-
-    print("Calibration Sequence:\n")
-    print("The following calibration sequence allows for more consistency in use.\n")
-    print("\t1. Place any lightweight object in the center of the viewfinder.\n")
-    print("\t2. Press the push button to activate the motor. The object will rotate around the belt.\n")
-    print("\t3. Once the object has traveled around the belt and is again in the center of the viewfinder, press "
-          "the button again. This will record the time required for a full rotation\n")
+    print("Calibration Sequence:\n\n"
+          + "The following calibration sequence allows for more consistency in use.\n\n"
+          + "1. Place any lightweight object in the center of the viewfinder.\n\n"
+          + "2. Press the push button to activate the motor. The object will rotate around the belt.\n\n"
+          + "3. Once the object has traveled around the belt and is again in the center of the viewfinder, press "
+          + "the button again. This will record the time required for a full rotation\n\n")
 
     input("Press enter to begin calibration cycle (or skip calibration if specified)")
 
     if c == "y":
-        calibrate()  # run calibration sequence to determine time for full rotation
+        rot_time: float = calibrate()  # run calibration sequence to determine time for full rotation
+    elif c == "n":
+        try:
+            timehistory: TextIO = open("timefile.txt", "r")
+            rot_time: float = float(timehistory.read())
+        except:
+            raise
     else:
-        timehistory = open("timefile.txt", "r")
-        rotation = float(timehistory.read())
-    print("Time for full loop is " + str(rotation) + "\n")
+        print("Invalid response to 'should calibration be recorded'")
 
-    print("Loading Sequence:")
-    print("The following loading sequence allows for initiation and loading of each test strip.\n")
-    print("\tFor each strip in the cluster, initiate the reaction immediately before loading the strip onto belt.")
-    print("\tThis process will be repeated for each strip in the cluster, before proceeding to the next cluster.")
-    print("\tIf only 1 cluster is being imaged, only one round will be made.\n")
+    print("Time for full loop is {0}.\n".format(str(rot_time)))
+
+    print("Loading Sequence:\n\n"
+          + "The following loading sequence allows for initiation and loading of each test strip.\n\n"
+          + "For each strip in the cluster, initiate the reaction immediately before loading the strip onto belt."
+          + "This process will be repeated for each strip in the cluster, before proceeding to the next cluster."
+          + "If only 1 cluster is being imaged, only one round will be made.\n")
+
     input("Press enter to begin loading cycle.")
 
+    cyclecount = 0
+    beginloading: float = time.perf_counter()
     loading(g, n, p, f)  # run loading sequence and take pictures of initial strip if specified
+    e -= 1
+    endloading: float = time.perf_counter()
+    loadingtime: float = endloading - beginloading
+    tracker: float = t - loadingtime
+    while e > 0:
+        cyclethread = threading.Timer(tracker, cycling)
+        begincycle: float = time.perf_counter()
+        cyclethread.start()
+        print("Performing photo cycle. Please wait.")
+        cyclethread.join()
+        tracker = t
+        e -= 1
+        print("Waiting for next photo cycle.")
+    sys.exit(0)
