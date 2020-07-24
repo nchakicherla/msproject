@@ -92,6 +92,7 @@ def loading(clusters, strips, profile, initial):
             print("Motor in motion. Please prepare next strip in cluster")
             motor(rot_time / strips)
         motor(rot_time / (strips * clusters))
+    cyclecount += 1
 
 
 # Cycling of belt, similar to loading cycle but without user confirmation (automated)
@@ -109,6 +110,7 @@ def cycling():
                 lights.fill((255, 255, 255))
                 cam.capture('{0}_{1}_{2}.jpg'.format(i, j, cyclecount))
             motor(rot_time / strips)
+    cyclecount += 1
 
 
 # Program starts here
