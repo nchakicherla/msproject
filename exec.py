@@ -18,7 +18,7 @@ GPIO.setup(detectpin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 GPIO.setup(motorpin, GPIO.OUT)
 GPIO.output(motorpin, 0)
 
-cam = picamera.PiCamera()
+cam = PiCamera()
 cam.resolution = (3280,2464)
 cam.start_preview(fullscreen = False, window = (800, 400, 640, 480)) # draw camera preview
 
@@ -30,16 +30,17 @@ def motor():
 # Method for determining how long it takes for full rotation of belt
 
 def rotationtime():
+    GPIO.add_event_detect(detectpin, GPIO.RISING, bouncetime=500)
     while True:
-        GPIO.add_event_detect(detectpin, GPIO.RISING, bouncetime=200)
         if GPIO.event_detected(detectpin):
             GPIO.output(motorpin, 0)
+            GPIO.remove_event_detect(detectpin)
             break
-        GPIO.remove_event_detect(detectpin)
+        
     return
 
 def calibrate():
-    GPIO.add_event_detect(detectpin, GPIO.RISING, bouncetime=200)
+    GPIO.add_event_detect(detectpin, GPIO.RISING, bouncetime=500)
     while True:
         if GPIO.event_detected(detectpin):
             GPIO.output(motorpin, 1)
@@ -79,6 +80,7 @@ print("\tpress the button again. This will record the time required for a full r
 input("Press enter to continue...")
 
 calibrate()
+print(looptime)
 
 
 
