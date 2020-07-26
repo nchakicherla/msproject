@@ -110,6 +110,7 @@ def cycling():
                 lights.fill((255, 255, 255))
                 cam.capture('{0}_{1}_{2}.jpg'.format(i, j, cyclecount))
             motor(rot_time / strips)
+        motor(rot_time / (strips * clusters))
     cyclecount += 1
 
 
