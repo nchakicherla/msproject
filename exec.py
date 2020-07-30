@@ -195,7 +195,8 @@ if __name__ == "__main__":
         cyclethread.start()
         print("Performing photo cycle. Please wait.")
         cyclethread.join()
-        tracker = t
+        endcycle: float = time.perf_counter()
+        tracker = t - (endcycle - begincycle)
         e -= 1
         print("Waiting for next photo cycle.")
     sys.exit(0)
