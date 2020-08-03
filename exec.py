@@ -97,20 +97,20 @@ def loading(clusters, strips, profile, initial):
 
 # Cycling of belt, similar to loading cycle but without user confirmation (automated)
 def cycling():
-    for i in range(clusters):
-        for j in range(strips):
-            if profile == 1:
+    for i in range(g):
+        for j in range(n):
+            if p == 1:
                 color = 0
                 for a in range(3):
                     lights.fill((r[color][0], r[color][1], r[color][2]))
                     # filename = cluster_strip_light.jpg
                     cam.capture('{0}_{1}_{2}_{3}.jpg'.format(i, j, color, cyclecount))
                     color += 1
-            elif profile == 2:
+            elif p == 2:
                 lights.fill((255, 255, 255))
                 cam.capture('{0}_{1}_{2}.jpg'.format(i, j, cyclecount))
-            motor(rot_time / strips)
-        motor(rot_time / (strips * clusters))
+            motor(rot_time / n)
+        motor(rot_time / (n * g))
     cyclecount += 1
 
 
