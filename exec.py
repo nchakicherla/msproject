@@ -4,16 +4,17 @@
 from typing import TextIO
 import sys
 import threading
-import RPi.GPIO as GPIO
-import picamera
-import time
-import board
-import neopixel
+import RPi.GPIO as GPIO # pylint: disable=import-error
+import picamera # pylint: disable=import-error
+import time # pylint: disable=import-error
+import board # pylint: disable=import-error
+import neopixel # pylint: disable=import-error
 
 detectpin = 22  # pin used for detecting button presses
 motorpin = 3  # pin used with TIP120 for controlling motor
 numLED = 58  # number of LEDs to be used with NeoPixel
 buttonbounce = 200  # bouncetime for GPIO button presses
+
 
 GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BCM)  # button input = 15, motor output = 7
@@ -69,6 +70,8 @@ def rotationtime():
 
 # Provides time to initiate test strip reactions and take initial photographs, if specified
 def loading(clusters, strips, profile, initial):
+    global cyclecount
+    cyclecount = 1
     for i in range(clusters):
         for j in range(strips):
             GPIO.add_event_detect(detectpin, GPIO.RISING, bouncetime=buttonbounce)
@@ -79,12 +82,10 @@ def loading(clusters, strips, profile, initial):
                     break
             if initial == "y":
                 if profile == 1:
-                    color = 0
-                    for a in range(3):
-                        lights.fill((r[color][0], r[color][1], r[color][2]))
+                    for a in range(4):
+                        lights.fill((r[a][0], r[a][1], r[a][2]))
                         # filename = cluster_strip_light_cyclenumber.jpg
-                        cam.capture('{0}_{1}_{2}_{3}.jpg'.format(i, j, color, cyclecount))
-                        color += 1
+                        cam.capture('{0}_{1}_{2}_{3}.jpg'.format(i, j, cyclecount, a))
                 elif profile == 2:
                     lights.fill((255, 255, 255))
                     cam.capture('{0}_{1}_{2}.jpg'.format(i, j, cyclecount))
@@ -97,15 +98,14 @@ def loading(clusters, strips, profile, initial):
 
 # Cycling of belt, similar to loading cycle but without user confirmation (automated)
 def cycling():
+    global cyclecount
     for i in range(g):
         for j in range(n):
             if p == 1:
-                color = 0
-                for a in range(3):
-                    lights.fill((r[color][0], r[color][1], r[color][2]))
+                for a in range(4):
+                    lights.fill((r[a][0], r[a][1], r[a][2]))
                     # filename = cluster_strip_light.jpg
-                    cam.capture('{0}_{1}_{2}_{3}.jpg'.format(i, j, color, cyclecount))
-                    color += 1
+                    cam.capture('{0}_{1}_{2}_{3}.jpg'.format(i, j, a, cyclecount))
             elif p == 2:
                 lights.fill((255, 255, 255))
                 cam.capture('{0}_{1}_{2}.jpg'.format(i, j, cyclecount))
@@ -182,8 +182,8 @@ if __name__ == "__main__":
 
     input("Press enter to begin loading cycle.")
 
-    cyclecount = 1
     beginloading: float = time.perf_counter()
+    #cyclecount = 1  # tracker for current cycle
     loading(g, n, p, f)  # run loading sequence and take pictures of initial strip if specified
     e -= 1
     endloading: float = time.perf_counter()
