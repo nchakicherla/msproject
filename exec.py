@@ -199,4 +199,5 @@ if __name__ == "__main__":
         tracker = t - (endcycle - begincycle)
         e -= 1
         print("Waiting for next photo cycle.")
+    print("Process complete. Cycle count has reached 0")
     sys.exit(0)
