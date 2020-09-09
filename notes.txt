@@ -1,0 +1,4 @@
+- system is higher throughput, 1000s of images
+- system allows for consistent strip placement in images
+- system allows for consistent timing of photography between strips
+- system allows for deliberate variation of lighting and chemistry parameters
