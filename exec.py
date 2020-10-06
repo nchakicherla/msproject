@@ -51,6 +51,7 @@ def calibrate():
             endrotation: float = time.perf_counter()
             rotation: float = endrotation - beginrotation  # Calculate time for full rotation for later use
             timefile = open("timefile.txt", "w")  # write rotation time to file
+            # ^^change this to write file in global variable instead
             timefile.write(rotation)
             break
     return rotation
