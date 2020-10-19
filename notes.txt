@@ -2,3 +2,8 @@
 - system allows for consistent strip placement in images
 - system allows for consistent timing of photography between strips
 - system allows for deliberate variation of lighting and chemistry parameters
+
+10-18-20
+- exact time when each strip is initiated and button press confirms placement should be noted in array
+    - this could allow for higher accuracy when timing subsequent images of same strip
+    - does not need to be complex, program could just wait for "x" seconds if strip was delayed, etc.

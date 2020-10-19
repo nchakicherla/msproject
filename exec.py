@@ -28,7 +28,7 @@ cam.start_preview(fullscreen=False, window=(800, 400, 640, 480))  # draw camera 
 
 lights = neopixel.NeoPixel(board.D18, numLED)  # create NeoPixel object for lights
 r = [[255, 197, 143], [255, 214, 170], [255, 241, 224],
-     [255, 250, 244]]  # create 2D array of RGB values for common light colors
+     [255, 250, 244], [255, 255, 255]]  # create 2D array of RGB values for common light colors
 
 
 # Method for activating motor/belt
@@ -51,7 +51,6 @@ def calibrate():
             endrotation: float = time.perf_counter()
             rotation: float = endrotation - beginrotation  # Calculate time for full rotation for later use
             timefile = open("timefile.txt", "w")  # write rotation time to file
-            # ^^change this to write file in global variable instead
             timefile.write(rotation)
             break
     return rotation
@@ -65,35 +64,49 @@ def rotationtime():
             GPIO.output(motorpin, 0)
             GPIO.remove_event_detect(detectpin)
             break
-
     return
 
 
 # Provides time to initiate test strip reactions and take initial photographs, if specified
-def loading(clusters, strips, profile, initial):
+def loading(clusters, initial):
     global cyclecount
     cyclecount = 1
     for i in range(clusters):
-        for j in range(strips):
+        for j in range(stripsCluster[i]):
             GPIO.add_event_detect(detectpin, GPIO.RISING, bouncetime=buttonbounce)
             print("Load strip, and press button when strip is securely placed on belt.")
             # User initiates chemistry, loads strip, then presses button to continue.
             while True:
                 if GPIO.event_detected(detectpin):
                     break
+
             if initial == "y":
-                if profile == 1:
+                if lightingCluster[i] == 1:
+                    lights.fill((255, 255, 255))
+                    time.sleep(0.2)
+                    cam.capture('{0}_{1}_{2}.jpg'.format(i, j, cyclecount))
+                elif lightingCluster[i] == 2:
                     for a in range(4):
                         lights.fill((r[a][0], r[a][1], r[a][2]))
-                        # filename = cluster_strip_light_cyclenumber.jpg
+                        time.sleep(0.2)
+                        # filename = cluster_strip_cyclenumber_light.jpg
                         cam.capture('{0}_{1}_{2}_{3}.jpg'.format(i, j, cyclecount, a))
-                elif profile == 2:
+                elif lightingCluster[i] == 3:
+                    for a in range(5):
+                        lights.fill((r[a][0], r[a][1], r[a][2]))
+                        time.sleep(0.2)
+                        cam.capture('{0}_{1}_{2}_{3}.jpg'.format(i, j, cyclecount, a))
+                else:
+                    print("Starting image was requested, but valid lighting profile was not specified."
+                          + "Defaulting to white light.\n")
                     lights.fill((255, 255, 255))
+                    time.sleep(0.2)
                     cam.capture('{0}_{1}_{2}.jpg'.format(i, j, cyclecount))
+
             GPIO.remove_event_detect(detectpin)
             print("Motor in motion. Please prepare next strip in cluster")
-            motor(rot_time / strips)
-        motor(rot_time / (strips * clusters))
+            motor(rot_time / stripsCluster[i])
+        motor(rot_time / (stripsCluster[i] * clusters))
     cyclecount += 1
 
 
@@ -101,51 +114,72 @@ def loading(clusters, strips, profile, initial):
 def cycling():
     global cyclecount
     for i in range(g):
-        for j in range(n):
-            if p == 1:
+        for j in range(stripsCluster[i]):
+            if lightingCluster[i] == 1:
+                lights.fill((255, 255, 255))
+                time.sleep(0.2)
+                cam.capture('{0}_{1}_{2}.jpg'.format(i, j, cyclecount))
+            elif lightingCluster[i] == 2:
                 for a in range(4):
                     lights.fill((r[a][0], r[a][1], r[a][2]))
+                    time.sleep(0.2)
                     # filename = cluster_strip_light.jpg
                     cam.capture('{0}_{1}_{2}_{3}.jpg'.format(i, j, a, cyclecount))
-            elif p == 2:
-                lights.fill((255, 255, 255))
-                cam.capture('{0}_{1}_{2}.jpg'.format(i, j, cyclecount))
-            motor(rot_time / n)
-        motor(rot_time / (n * g))
+            elif lightingCluster[i] == 3:
+                for a in range(5):
+                    lights.fill((r[a][0], r[a][1], r[a][2]))
+                    time.sleep(0.2)
+                    cam.capture('{0}_{1}_{2}_{3}.jpg'.format(i, j, cyclecount, a))
+            motor(rot_time / stripsCluster[i])
+        motor(rot_time / (stripsCluster[i] * g))
     cyclecount += 1
 
 
-# Program starts here
+# Program starts here unless imported
 if __name__ == "__main__":
     # Retrieve operation parameters from user
-    print("This program was created to automate the photography of serum creatinine test strips\n\n")
+    print("This program was created to automate the photography of serum creatinine test strips.\n\n")
 
     while True:
-        g = int(input("Enter the number of strip clusters (1-4):"))
-        if 1 <= g <= 4:
+        g = int(input("Enter the number of strip clusters (1-2)..."))
+        if 1 <= g <= 2:
             break
+
+    stripsCluster = []
     while True:
-        n = int(input("Enter the number of strips per cluster (1-4):"))
-        if 1 <= n <= 4:
+        for cluster in range(g):
+            n = int(input("Enter the number of strips in cluster " + str(cluster) + "\n"))
+            stripsCluster.append(n)
+        if len(stripsCluster) == g:
             break
+        else:
+            print("Invalid entries for number of strips in each cluster. Please try again.\n\n")
+
+    lightingCluster = []
     while True:
-        p = int(input("Enter lighting profile to be used (1-2):"))  # 1 = 4 colors, 2 = white light
-        if 1 <= p <= 2:
+        for cluster in range(g):
+            p = int(input("Enter the lighting profile to be used for cluster" + str(cluster) + "\n"))
+            lightingCluster.append(p)
+        # p = int(input("Enter lighting profile to be used (1-3)..."))  # 1 = 4 colors, 2 = white light
+        if len(lightingCluster) == g:
             break
+        else:
+            print("Invalid entries for lighting profile to be used for each cluster. Please try again.\n\n")
+
     while True:
-        t = int(input("Enter time to wait between images (seconds):"))
+        t = int(input("Enter time to wait between images (seconds)..."))
         if t > 0:
             break
     while True:
-        f = str(input("Should images be obtained at t = 0? (y/n):"))
+        f = str(input("Should images be obtained at t = 0? (y/n)..."))
         if f == 'y' or f == 'n':
             break
     while True:
-        c = str(input("Should calibration be performed? (y/n):"))
+        c = str(input("Should calibration be performed? (y/n)..."))
         if c == 'y' or c == 'n':
             break
     while True:
-        e = int(input("Enter number of cycles to perform"))
+        e = int(input("Enter number of cycles to perform..."))
         if e >= 0:
             break
 
@@ -160,7 +194,7 @@ if __name__ == "__main__":
           + "3. Once the object has traveled around the belt and is again in the center of the viewfinder, press "
           + "the button again. This will record the time required for a full rotation\n\n")
 
-    input("Press enter to begin calibration cycle (or skip calibration if specified)")
+    input("Press enter to begin calibration cycle (or skip calibration if specified)...")
 
     if c == "y":
         rot_time: float = calibrate()  # run calibration sequence to determine time for full rotation
@@ -170,8 +204,6 @@ if __name__ == "__main__":
             rot_time: float = float(timehistory.read())
         except:
             raise
-    else:
-        print("Invalid response to 'should calibration be recorded'")
 
     print("Time for full loop is {0}.\n".format(str(rot_time)))
 
@@ -179,18 +211,18 @@ if __name__ == "__main__":
           + "The following loading sequence allows for initiation and loading of each test strip.\n\n"
           + "For each strip in the cluster, initiate the reaction immediately before loading the strip onto belt."
           + "This process will be repeated for each strip in the cluster, before proceeding to the next cluster."
-          + "If only 1 cluster is being imaged, only one round will be made.\n")
+          + "If only 1 cluster is being imaged, only one round will be made.\n\n")
 
-    input("Press enter to begin loading cycle.")
+    cyclecount = 0
+    input("Press enter to begin loading cycle...\n")
 
     beginloading: float = time.perf_counter()
-    #cyclecount = 1  # tracker for current cycle
-    loading(g, n, p, f)  # run loading sequence and take pictures of initial strip if specified
-    e -= 1
+    loading(g, f)  # run loading sequence and take pictures of initial strip if specified
     endloading: float = time.perf_counter()
     loadingtime: float = endloading - beginloading
     tracker: float = t - loadingtime
-    while e > 0:
+
+    while cyclecount <= e:
         cyclethread = threading.Timer(tracker, cycling)
         begincycle: float = time.perf_counter()
         cyclethread.start()
@@ -198,7 +230,7 @@ if __name__ == "__main__":
         cyclethread.join()
         endcycle: float = time.perf_counter()
         tracker = t - (endcycle - begincycle)
-        e -= 1
         print("Waiting for next photo cycle.")
-    print("Process complete. Cycle count has reached 0")
+
+    print("Process complete. All cycles have been completed.")
     sys.exit(0)
