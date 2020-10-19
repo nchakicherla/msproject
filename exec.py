@@ -100,7 +100,7 @@ def loading(clusters, initial):
                     print("Starting image was requested, but valid lighting profile was not specified."
                           + "Defaulting to white light.\n")
                     lights.fill((255, 255, 255))
-                    time.sleep(0.2)
+                    time.sleep(1)
                     cam.capture('{0}_{1}_{2}.jpg'.format(i, j, cyclecount))
 
             GPIO.remove_event_detect(detectpin)
