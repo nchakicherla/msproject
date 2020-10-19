@@ -83,18 +83,18 @@ def loading(clusters, initial):
             if initial == "y":
                 if lightingCluster[i] == 1:
                     lights.fill((255, 255, 255))
-                    time.sleep(0.2)
+                    time.sleep(1)
                     cam.capture('{0}_{1}_{2}.jpg'.format(i, j, cyclecount))
                 elif lightingCluster[i] == 2:
                     for a in range(4):
                         lights.fill((r[a][0], r[a][1], r[a][2]))
-                        time.sleep(0.2)
+                        time.sleep(1)
                         # filename = cluster_strip_cyclenumber_light.jpg
                         cam.capture('{0}_{1}_{2}_{3}.jpg'.format(i, j, cyclecount, a))
                 elif lightingCluster[i] == 3:
                     for a in range(5):
                         lights.fill((r[a][0], r[a][1], r[a][2]))
-                        time.sleep(0.2)
+                        time.sleep(1)
                         cam.capture('{0}_{1}_{2}_{3}.jpg'.format(i, j, cyclecount, a))
                 else:
                     print("Starting image was requested, but valid lighting profile was not specified."
@@ -117,18 +117,18 @@ def cycling():
         for j in range(stripsCluster[i]):
             if lightingCluster[i] == 1:
                 lights.fill((255, 255, 255))
-                time.sleep(0.2)
+                time.sleep(1)
                 cam.capture('{0}_{1}_{2}.jpg'.format(i, j, cyclecount))
             elif lightingCluster[i] == 2:
                 for a in range(4):
                     lights.fill((r[a][0], r[a][1], r[a][2]))
-                    time.sleep(0.2)
+                    time.sleep(1)
                     # filename = cluster_strip_light.jpg
                     cam.capture('{0}_{1}_{2}_{3}.jpg'.format(i, j, a, cyclecount))
             elif lightingCluster[i] == 3:
                 for a in range(5):
                     lights.fill((r[a][0], r[a][1], r[a][2]))
-                    time.sleep(0.2)
+                    time.sleep(1)
                     cam.capture('{0}_{1}_{2}_{3}.jpg'.format(i, j, cyclecount, a))
             motor(rot_time / stripsCluster[i])
         motor(rot_time / (stripsCluster[i] * g))
