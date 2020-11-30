@@ -113,9 +113,13 @@ def loading(clusters, initial):
             GPIO.remove_event_detect(detectpin)
             print("Motor in motion. Please prepare next strip in cluster")
             motor(rot_time / stripsPerCluster[i])
-        if clusters > 1:
-            motor(rot_time / (stripsPerCluster[i] * clusters))
-    cyclecount += 1
+        if i + 1 = clusters:
+            continue
+        else:
+            clusterOffset = rot_time / (stripsPerCluster[i] * clusters)
+            motor(clusterOffset)
+    if initial == "y":
+        cyclecount += 1
     return
 
 
@@ -147,6 +151,11 @@ def cycling():
                 shouldAdjust = 0
         offset = getCorrection()
         correct(offset)
+        if i + 1 = g:
+            continue
+        elif i + 1 < g:
+            clusterOffset = rot_time / (stripsPerCluster[i] * clusters)
+            motor(clusterOffset)
     cyclecount += 1
     return
 
@@ -192,7 +201,7 @@ def correct(location):
         motor((7.7)*((13-location)/13))
         return
     elif 13 < location <= 19:
-        #global shouldAdjust 
+        #global shouldAdjust
         shouldAdjust = ((19-location)/6)*3.5
         return
     else:
@@ -243,7 +252,6 @@ if __name__ == "__main__":
         # support for multiple colors coming later, profiles should all be 1
         if len(lightingCluster) == g:
             print(lightingCluster)
-            print("\n")
             confirmation = input("Is this the correct lighting profile for each cluster?")
             if confirmation == "n":
                 continue
