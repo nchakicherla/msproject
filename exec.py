@@ -57,7 +57,7 @@ def calibrate():
             endrotation: float = time.perf_counter()
             rotation: float = endrotation - beginrotation  # Calculate time for full rotation for later use
             timefile = open("timefile.txt", "w")  # write rotation time to file
-            timefile.write(rotation)
+            timefile.write(str(rotation))
             break
     return rotation
 
@@ -88,7 +88,7 @@ def loading(clusters, initial):
 
             if initial == "y":
                 if lightingCluster[i] == 1:
-                    lights.fill((255, 255, 255))
+                    #lights.fill((255, 255, 255))
                     time.sleep(1)
                     cam.capture('{0}_{1}_{2}.jpg'.format(i, j, cyclecount))
                     # files are saved with format cluster_stripincluster_cyclecount
@@ -100,54 +100,55 @@ def loading(clusters, initial):
                         cam.capture('{0}_{1}_{2}_{3}.jpg'.format(i, j, cyclecount, a))
                 elif lightingCluster[i] == 3:
                     for a in range(5):
-                        lights.fill((r[a][0], r[a][1], r[a][2]))
+                        #lights.fill((r[a][0], r[a][1], r[a][2]))
                         time.sleep(1)
                         cam.capture('{0}_{1}_{2}_{3}.jpg'.format(i, j, cyclecount, a))
                 else:
                     print("Starting image was requested, but valid lighting profile was not specified."
                           + "Defaulting to white light.\n")
-                    lights.fill((255, 255, 255))
+                    #lights.fill((255, 255, 255))
                     time.sleep(1)
                     cam.capture('{0}_{1}_{2}.jpg'.format(i, j, cyclecount))
 
             GPIO.remove_event_detect(detectpin)
             print("Motor in motion. Please prepare next strip in cluster")
             motor(rot_time / stripsPerCluster[i])
-        motor(rot_time / (stripsPerCluster[i] * clusters))
+        if clusters > 1:
+            motor(rot_time / (stripsPerCluster[i] * clusters))
     cyclecount += 1
+    return
 
 
 # Cycling of belt, similar to loading cycle but without user confirmation (automated)
 def cycling():
     global cyclecount
+    global shouldAdjust
     for i in range(g):
         for j in range(stripsPerCluster[i]):
             if lightingCluster[i] == 1:
-                lights.fill((255, 255, 255))
+                #lights.fill((255, 255, 255))
                 time.sleep(1)
                 cam.capture('{0}_{1}_{2}.jpg'.format(i, j, cyclecount))
             elif lightingCluster[i] == 2:
                 for a in range(4):
-                    lights.fill((r[a][0], r[a][1], r[a][2]))
+                    #lights.fill((r[a][0], r[a][1], r[a][2]))
                     time.sleep(1)
                     # filename = cluster_strip_light.jpg
                     cam.capture('{0}_{1}_{2}_{3}.jpg'.format(i, j, a, cyclecount))
             elif lightingCluster[i] == 3:
                 for a in range(5):
-                    lights.fill((r[a][0], r[a][1], r[a][2]))
+                    #lights.fill((r[a][0], r[a][1], r[a][2]))
                     time.sleep(1)
                     cam.capture('{0}_{1}_{2}_{3}.jpg'.format(i, j, cyclecount, a))
-            motor(rot_time / stripsPerCluster[i])
+            if shouldAdjust == 0:
+                motor(rot_time / stripsPerCluster[i])
+            elif shouldAdjust != 0:
+                motor(rot_time / (stripsPerCluster[i] * g) - shouldAdjust)
+                shouldAdjust = 0
         offset = getCorrection()
         correct(offset)
-        if shouldAdjust == 0:
-            motor(rot_time / (stripsPerCluster[i] * g))
-        elif shouldAdjust != 0:
-            motor(rot_time / (stripsPerCluster[i] * g) - shouldAdjust)
-            shouldAdjust = 0
-        else:
-            motor(rot_time / (stripsPerCluster[i] * g))
     cyclecount += 1
+    return
 
 def getCorrection():
     checkX = [142, 171, 199, 242, 284, 324, 370, 413, 461, 511, 558, 604, 652, 705, 752, 804, 856, 907, 960, 1012]
@@ -163,12 +164,13 @@ def getCorrection():
 
     mask = cv2.inRange(image, lower, upper)
     output = cv2.bitwise_and(image, image, mask = mask)
-
+    """
     # lists of x and y coordinates that tell program where to look for blue sticker
     checkX = [142, 171, 199, 242, 284, 324, 370, 413, 461, 511, 558, 604, 652, 705, 752, 804, 856, 907, 960, 1012]
     checkY = [520, 497, 476, 440, 413, 388, 365, 345, 330, 317, 309, 298, 293, 290, 284, 286, 295, 298, 311, 323]
     # x = 717, y = 293
     # output[y][x]
+    """
 
     #check all predefined locations for sticker to determine where strip is
     for spotCheck in range(20):
@@ -177,6 +179,7 @@ def getCorrection():
             return spotCheck
         else:
             continue
+    cam.resolution = (3280, 2464)
     return
 
 
@@ -189,7 +192,8 @@ def correct(location):
         motor((7.7)*((13-location)/13))
         return
     elif 13 < location <= 19:
-        global shouldAdjust = ((19-location)/6)*3.5
+        #global shouldAdjust 
+        shouldAdjust = ((19-location)/6)*3.5
         return
     else:
         return
@@ -213,18 +217,18 @@ if __name__ == "__main__":
                 if 1 <= n <= 4:
                     stripsPerCluster.append(n)
                     break
+                else:
+                    continue
 
-        while True:
-            if len(stripsPerCluster) == g:
-                print(stripsPerCluster)
-                print("\n")
-                confirmation = input("Is this the correct number of strips in each cluster?")
-                if confirmation == "y":
-                    break
 
-            else:
-                print("Invalid entries for number of strips in each cluster. Please try again.\n\n")
+        if len(stripsPerCluster) == g:
+            print(stripsPerCluster)
+            print("\n")
+            confirmation = input("Is this the correct number of strips in each cluster?")
+            if confirmation == "n":
                 continue
+            else:
+                break
 
     lightingCluster = []
     while True:
@@ -237,18 +241,14 @@ if __name__ == "__main__":
 
         # p = int(input("Enter lighting profile to be used (1-3)..."))  # 1 = white light, 2 = 4 colors
         # support for multiple colors coming later, profiles should all be 1
-        while True:
-            if len(lightingCluster) == g:
-                print(lightingCluster)
-                print("\n")
-                confirmation = input("Is this the correct lighting profile for each cluster?")
-                if confirmation == "y":
-                    break
-                else
-                    continue
-        else:
-            print("Invalid entries for lighting profile to be used for each cluster. Please try again.\n\n")
-            continue
+        if len(lightingCluster) == g:
+            print(lightingCluster)
+            print("\n")
+            confirmation = input("Is this the correct lighting profile for each cluster?")
+            if confirmation == "n":
+                continue
+            else:
+                break
 
     while True:
         t = int(input("Enter time to wait between images (seconds)..."))
@@ -268,7 +268,8 @@ if __name__ == "__main__":
             break
 
     # light up all LEDs white to ease loading process
-    lights.fill((255, 255, 255))
+    #enableLights()
+    #lights.fill((255, 255, 255))
 
     # Initiate calibration, where time required for full rotation is calculated for later use
     print("Calibration Sequence:\n\n"
@@ -306,6 +307,8 @@ if __name__ == "__main__":
     loadingtime: float = endloading - beginloading
     tracker: float = t - loadingtime
 
+
+    shouldAdjust = 0
     while cyclecount <= e:
         cyclethread = threading.Timer(tracker, cycling)
         begincycle: float = time.perf_counter()
