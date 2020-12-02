@@ -76,7 +76,7 @@ def rotationtime():
 # Provides time to initiate test strip reactions and take initial photographs, if specified
 def loading(clusters, initial):
     global cyclecount
-    cyclecount = 1
+    cyclecount = 0
     for i in range(clusters):
         for j in range(stripsPerCluster[i]):
             GPIO.add_event_detect(detectpin, GPIO.RISING, bouncetime=buttonbounce)
@@ -112,7 +112,11 @@ def loading(clusters, initial):
 
             GPIO.remove_event_detect(detectpin)
             print("Motor in motion. Please prepare next strip in cluster")
-            motor(rot_time / stripsPerCluster[i])
+            if (j + 1 = stripsPerCluster[i]) and (i + 1 = clusters):
+                clusterOffset = rot_time / (stripsPerCluster[i] * clusters)
+                motor(clusterOffset)
+            else
+                motor(rot_time / stripsPerCluster[i])
         if i + 1 = clusters:
             continue
         else:
@@ -144,16 +148,30 @@ def cycling():
                     #lights.fill((r[a][0], r[a][1], r[a][2]))
                     time.sleep(1)
                     cam.capture('{0}_{1}_{2}_{3}.jpg'.format(i, j, cyclecount, a))
+
+
+            if (j + 1 = stripsPerCluster[i]) and (i + 1 = g):
+                if shouldAdjust == 0:
+                    clusterOffset = rot_time / (stripsPerCluster[i] * g)
+                    motor(clusterOffset)
+                elif shouldAdjust != 0:
+                    clusterOffset = rot_time / (stripsPerCluster[i] * g) - shouldAdjust
+                    motor(clusterOffset)
+                    shouldAdjust = 0
+            else
+                motor(rot_time / stripsPerCluster[i])
+            """
             if shouldAdjust == 0:
                 motor(rot_time / stripsPerCluster[i])
             elif shouldAdjust != 0:
                 motor(rot_time / (stripsPerCluster[i] * g) - shouldAdjust)
                 shouldAdjust = 0
+            """
         offset = getCorrection()
         correct(offset)
-        if i + 1 = g:
+        if g = 1:
             continue
-        elif i + 1 < g:
+        elif g > 1:
             clusterOffset = rot_time / (stripsPerCluster[i] * clusters)
             motor(clusterOffset)
     cyclecount += 1
