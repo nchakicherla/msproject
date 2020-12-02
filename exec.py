@@ -76,7 +76,7 @@ def rotationtime():
 # Provides time to initiate test strip reactions and take initial photographs, if specified
 def loading(clusters, initial):
     global cyclecount
-    cyclecount = 0
+    cyclecount = 1
     for i in range(clusters):
         for j in range(stripsPerCluster[i]):
             GPIO.add_event_detect(detectpin, GPIO.RISING, bouncetime=buttonbounce)
@@ -112,12 +112,14 @@ def loading(clusters, initial):
 
             GPIO.remove_event_detect(detectpin)
             print("Motor in motion. Please prepare next strip in cluster")
-            if (j + 1 = stripsPerCluster[i]) and (i + 1 = clusters):
+            if (j + 1 == stripsPerCluster[i]) and (i + 1 == clusters):
                 clusterOffset = rot_time / (stripsPerCluster[i] * clusters)
                 motor(clusterOffset)
-            else
+            else:
                 motor(rot_time / stripsPerCluster[i])
-        if i + 1 = clusters:
+        offset = getCorrection()
+        correct(offset)
+        if i + 1 == clusters:
             continue
         else:
             clusterOffset = rot_time / (stripsPerCluster[i] * clusters)
@@ -150,7 +152,7 @@ def cycling():
                     cam.capture('{0}_{1}_{2}_{3}.jpg'.format(i, j, cyclecount, a))
 
 
-            if (j + 1 = stripsPerCluster[i]) and (i + 1 = g):
+            if (j + 1 == stripsPerCluster[i]) and (i + 1 == g):
                 if shouldAdjust == 0:
                     clusterOffset = rot_time / (stripsPerCluster[i] * g)
                     motor(clusterOffset)
@@ -158,7 +160,13 @@ def cycling():
                     clusterOffset = rot_time / (stripsPerCluster[i] * g) - shouldAdjust
                     motor(clusterOffset)
                     shouldAdjust = 0
-            else
+            elif (j + 1 == stripsPerCluster[i]) and (i + 1 != g):
+                motor(rot_time / stripsPerCluster[i])
+                offset = getCorrection()
+                correct(offset)
+                clusterOffset = rot_time / (stripsPerCluster[i] * g)
+                motor(clusterOffset)
+            else:
                 motor(rot_time / stripsPerCluster[i])
             """
             if shouldAdjust == 0:
@@ -167,13 +175,17 @@ def cycling():
                 motor(rot_time / (stripsPerCluster[i] * g) - shouldAdjust)
                 shouldAdjust = 0
             """
+        """
         offset = getCorrection()
         correct(offset)
-        if g = 1:
+        """
+    """
+        if i + 1 == g:
             continue
-        elif g > 1:
-            clusterOffset = rot_time / (stripsPerCluster[i] * clusters)
+        else:
+            clusterOffset = rot_time / (stripsPerCluster[i] * g)
             motor(clusterOffset)
+    """
     cyclecount += 1
     return
 
